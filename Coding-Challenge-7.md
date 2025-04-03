@@ -171,28 +171,46 @@ anova(model_interaction)
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-####From the Linear Model: 1) The Intercept = 182.3 — this is the
-average emergence for the reference level (Treatment 1 at Day 0). 2)
-Treatment2 was significant and negative (−136.5, p \< 2e-16) -
-*Treatment2* emergence is substantially *lower* than Treatment1. 3) All
-other treatments (3–9) and days (14, 21, 28) are not significant
-individually. With most interaction terms having p \> 0.8 - indicates no
-evidence of meaningful interaction. 4) R² = 0.96: The model explains 96%
-of the variation in plant emergence. 5) Residual Standard Error = 10.65
-— the average deviation from the predicted values. 6) F-statistic =
-71.21, p \< 2.2e-16 — the full model is statistically significant
+####From the Linear Model:
 
-####From the ANOVA table 1) Strong evidence that treatments differ -
-p-value \< 2.2e-16 2) Planting day also significantly affects
-emergence - p-value = 1.88e-05 3) No evidence that the effect of
-treatment depends on day - p-value = 1.00
+1.  The Intercept = 182.3 — this is the average emergence for the
+    reference level (Treatment 1 at Day 0).
+2.  Treatment2 was significant and negative (−136.5, p \< 2e-16)
+    -   *Treatment2* emergence is substantially *lower* than Treatment1.
+3.  All other treatments (3–9) and days (14, 21, 28) are not significant
+    individually. With most interaction terms having p \> 0.8
 
-####Interpretation While both *treatment* and *days after planting*
-independently *affect plant emergence*, their *interaction does not*,
-suggesting that the difference between treatments is consistent across
-planting days. In other words, *Treatment 2 consistently lowers
-emergence*, *regardless of when* plants are measured, and *no treatment
-shows a day-specific response.*
+-   indicates no evidence of meaningful interaction.
+
+1.  R² = 0.96: The model explains 96% of the variation in plant
+    emergence.
+2.  Residual Standard Error = 10.65 — the average deviation from the
+    predicted values.
+3.  F-statistic = 71.21, p \< 2.2e-16 — the full model is statistically
+    significant
+
+####From the ANOVA table
+
+1.  Strong evidence that treatments differ
+
+-   p-value \< 2.2e-16
+
+1.  Planting day also significantly affects emergence
+
+-   p-value = 1.88e-05
+
+1.  No evidence that the effect of treatment depends on day
+
+-   p-value = 1.00
+
+####Interpretation
+
+While both *treatment* and *days after planting* independently *affect
+plant emergence*, their *interaction does not*, suggesting that the
+difference between treatments is consistent across planting days. In
+other words, *Treatment 2 consistently lowers emergence*, *regardless of
+when* plants are measured, and *no treatment shows a day-specific
+response.*
 
 #3) Simplified Model Without Interaction
 
@@ -288,8 +306,10 @@ without the interaction is appropriate.
 -   F(3,132) = 11.07
 -   *p = 1.57e-06*
 
-####Interpretation In this model, *Treatment 2* significantly *reduces
-emergence* compared to the baseline, and emergence increases over time.
+####Interpretation
+
+In this model, *Treatment 2* significantly *reduces emergence* compared
+to the baseline, and emergence increases over time.
 
 The interaction term is not needed because there is no evidence that the
 effect of treatment varies by planting day. The simplified model
@@ -341,10 +361,12 @@ cld_results
     -   These are not significantly different from each other, but there
         may be overlap between group “b” and “c”? (I think)
 
-####Interpretation The Tukey test confirms that *Treatment 2* results in
-*significantly lower emergence than all other treatments* (group “*a*”),
-aligning with the earlier model output. *Treatments 3, 5, and 6* form
-the top-performing group (“*c*”), with the *highest emergence.* Other
+####Interpretation
+
+The Tukey test confirms that *Treatment 2* results in *significantly
+lower emergence than all other treatments* (group “*a*”), aligning with
+the earlier model output. *Treatments 3, 5, and 6* form the
+top-performing group (“*c*”), with the *highest emergence.* Other
 treatments fall in the middle and are not clearly different from each
 other.This supports our earlier findings from the linear model and
 clarifies which treatments differ.
