@@ -1,0 +1,177 @@
+---
+title: "Coding Challenge 7"
+author: "Dustyn Lewis"
+date: "2025-04-03"
+output:
+  md_document:
+    variant: markdown_github
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+Loading in libraries and setting working directory
+```{r setup}
+setwd("C:/Users/Dutal/OneDrive/Desktop/Classes/PLPA 6820/Linear Models/Coding-Challenge-7")
+library(tidyverse)
+library(lme4)
+library(emmeans)
+library(multcomp)
+library(multcompView)
+```
+
+
+#1) Load Data and Convert to a Factor
+``` {r}
+# Load data
+STAND <- read.csv("PlantEmergence.csv")
+
+# Convert columns to factor retrieving columns from data (STAND) using  '$' (witin)
+STAND$Treatment <- as.factor(STAND$Treatment) 
+STAND$DaysAfterPlanting <- as.factor(STAND$DaysAfterPlanting)
+STAND$Rep <- as.factor(STAND$Rep)
+
+head(STAND)
+``` 
+
+
+#2) Fit Linear Model with Interaction
+``` {r}
+model_interaction <- lm(Emergence ~ Treatment * DaysAfterPlanting, data = STAND)
+summary(model_interaction)
+anova(model_interaction)
+``` 
+####From the Linear Model:
+1) The Intercept = 182.3 
+    — this is the average emergence for the reference level (Treatment 1 at Day 0).
+2) Treatment2 was significant and negative (−136.5, p < 2e-16) 
+    - *Treatment2* emergence is substantially *lower* than Treatment1.
+3) All other treatments (3–9) and days (14, 21, 28) are not significant individually. With most interaction terms having p > 0.8
+  - indicates no evidence of meaningful interaction.
+4) R² = 0.96: The model explains 96% of the variation in plant emergence.
+5) Residual Standard Error = 10.65 
+  — the average deviation from the predicted values.
+6) F-statistic = 71.21, p < 2.2e-16 
+  — the full model is statistically significant
+  
+####From the ANOVA table
+1) Strong evidence that treatments differ 
+  - p-value < 2.2e-16
+2) Planting day also significantly affects emergence 
+  - p-value = 1.88e-05
+3) No evidence that the effect of treatment depends on day
+  - p-value = 1.00
+
+####Interpretation
+While both *treatment* and *days after planting* independently *affect plant emergence*, their *interaction does not*, suggesting that the difference between treatments is consistent across planting days. In other words, *Treatment 2 consistently lowers emergence*, *regardless of when* plants are measured, and *no treatment shows a day-specific response.*
+
+
+#3) Simplified Model Without Interaction
+``` {r}
+model_main <- lm(Emergence ~ Treatment + DaysAfterPlanting, data = STAND)
+summary(model_main)
+anova(model_main)
+``` 
+Based on the results of the linear model in question 2, where the *interaction effect was not significant* (p = 1.00) (meaning the *effect of treatment does not depend on the planting day*) a simplified model without the interaction is appropriate.
+
+#### From summary of simplified linear model without the interaction term
+1) Intercept = 182.16
+  - This is the mean emergence for Treatment 1 on Day 0.
+2) *Treatment2* = −134.53, p < 2e-16
+  - Plants in Treatment 2 had 134.5 *fewer emerged plants* than Treatment 1 (baseline), regardless of planting day.
+3) Several other *treatments* (*3, 5, 6, 8*) also show *significant increases* in emergence.
+  - Treatments 4, 7, and 9 are not significantly different from the baseline.
+4) *All planting days* (14, 21, 28) *significantly increase emergence* compared to Day 0.
+5) R² = 0.958 — The model explains 95.8% of the variability in emergence.
+  - Residual Std. Error = 9.69
+    - good model fit.
+  - F-statistic = 273.6, p < 2.2e-16 
+    - the model is highly significant.
+    
+#### From ANOVA without the interaction term
+1) *Treatment effect* is highly significant
+  - F(8,132) = 372.07
+  - *p < 2.2e-16*
+2) *DaysAfterPlanting effect* is also significant
+  - F(3,132) = 11.07 
+  - *p = 1.57e-06*
+
+####Interpretation
+In this model, *Treatment 2* significantly *reduces emergence* compared to the baseline, and emergence increases over time. 
+
+The interaction term is not needed because there is no evidence that the effect of treatment varies by planting day. The simplified model including only main effects of treatment and planting day fits well and is more parsimonious. 
+
+
+#4) Least Squares Means and Tukey Separation
+``` {r}
+lsmeans_treatment <- emmeans(model_main, ~ Treatment)
+cld_results <- cld(lsmeans_treatment, alpha = 0.05, Letters = letters)
+cld_results
+``` 
+
+#### From the `emmeans` output and the `cld` output
+1) *Treatment 2* has the *lowest mean emergence* (55.6) 
+  - grouped as “*a*”, indicating it's significantly different from all other treatments.
+2) *Treatments 3, 5, and 6* have the *highest mean emergence* (199.9–200.9) 
+  - grouped as “c”.
+3) Treatments 7, 1, 4, 8, and 9 are in the middle range (188.0–197.9) 
+  - grouped “b” or “bc”, meaning:
+    - These are not significantly different from each other, but there may be overlap between group "b" and “c”? (I think)
+ 
+####Interpretation
+The Tukey test confirms that *Treatment 2* results in *significantly lower emergence than all other treatments* (group “*a*”), aligning with the earlier model output. 
+*Treatments 3, 5, and 6* form the top-performing group (“*c*”), with the *highest emergence.*
+Other treatments fall in the middle and are not clearly different from each other.This supports our earlier findings from the linear model and clarifies which treatments differ.
+
+
+#5) Plotting with Tukey Letters
+```{r}
+plot_cldbars_onefactor <- function(lm_model, factor) {
+  data <- lm_model$model
+  variables <- colnames(data)
+  dependent_var <- variables[1]
+
+  lsmeans <- emmeans(lm_model, as.formula(paste("~", factor)))
+  Results_lsmeans <- cld(lsmeans, alpha = 0.05, reversed = TRUE, details = TRUE, Letters = letters)
+  
+  sig.diff.letters <- data.frame(Results_lsmeans$emmeans[, 1], str_trim(Results_lsmeans$emmeans[, 7]))
+  colnames(sig.diff.letters) <- c(factor, "Letters")
+  
+  ave_stand2 <- data %>%
+    group_by(!!sym(factor)) %>%
+    summarize(
+      ave.emerge = mean(.data[[dependent_var]], na.rm = TRUE),
+      se = sd(.data[[dependent_var]]) / sqrt(n())
+    ) %>%
+    left_join(sig.diff.letters, by = factor) %>%
+    mutate(letter_position = ave.emerge + 10 * se)
+
+  ggplot(data, aes(x = !!sym(factor), y = !!sym(dependent_var))) +
+    stat_summary(fun = mean, geom = "bar") +
+    stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.5) +
+    ylab("Number of emerged plants") +
+    geom_jitter(width = 0.02, alpha = 0.5) +
+    geom_text(data = ave_stand2, aes(label = Letters, y = letter_position), size = 5) +
+    xlab(as.character(factor)) +
+    theme_classic()
+}
+
+plot_cldbars_onefactor(model_main, "Treatment")
+```
+
+#### Function Purpose
+The function `plot_cldbars_onefactor()`: Takes a linear model (lm_model) and a single factor (e.g., "Treatment") and calculates least-squares means using `emmeans()`. Using `cld()` it applies Tukey-adjusted comparisons (pairwise) and attaches the grouping letters to show treatments are statistically different (non-overlapping)
+
+#### Interpretation
+The plot shows the mean number of emerged plants per treatment (bars) with black dots representing individuals observations, standard error bars being included, and CLD above each bar (mentioned earlier) to further show group differences. We can see:
+1) Treatment 2 is in group "c" and is clearly significantly lower in emergence than all other treatments.
+2) Treatments 3, 5, and 6 are in group "a" 
+  - they have the highest emergence, with no statistically significant differences among them.
+3) Treatments 1, 4, 8, and 9 fall into "ab"
+  - not significantly different from the top group, "a", but also not from the mid-lower group, "b".
+4) Treatment 7 is labeled "b"
+  - it is lower than the “a” group, but not as low as "c” group.
+
+# Commit and Push
+[GitHub](https://github.com/Dustyn-T-Lewis/Coding-Challenge-7.git)
+
+https://github.com/Dustyn-T-Lewis/Coding-Challenge-7.git
